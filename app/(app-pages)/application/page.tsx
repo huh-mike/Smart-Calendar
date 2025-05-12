@@ -1,7 +1,6 @@
 'use client';
 
-import {createClient} from '@/utils/supabase/client'
-import {useCallback, useMemo, useState} from 'react';
+import {useCallback, useEffect, useMemo, useState} from 'react';
 import {Calendar} from '@/components/ui/calendar';
 import {Button} from '@/components/ui/button';
 import {
@@ -24,33 +23,30 @@ import {addEvent, deleteEvent, fetchEvents, updateEvent} from '@/lib/api/events'
 import {format, isValid, parseISO, setHours, setMilliseconds, setMinutes, setSeconds, startOfMonth} from 'date-fns';
 import {AlertTriangle, Edit3, Loader2, PlusCircle, Trash2} from 'lucide-react';
 
+import {useUserStore} from "@/stores/userStore";
+
 import type { DayButtonProps } from 'react-day-picker';
 
 
-async function getSupabaseUserId(){
-    const supabase = createClient();
-    const { data } = await supabase.auth.getUser();
-    if (data?.user) {
-        console.log(data?.user.id);
-        return data?.user.id;
-    } else {
-        console.log('No user is currently logged in.');
-        return null;
-    }
-}
-
 export default function AppPage() {
-    let userId = {}
-    getSupabaseUserId().then(id => {
-        if (id) {
-            console.log('Supabase User ID (from .then):', id);
-            userId = id;
+
+    const fetchUserId = useUserStore((state) => state.fetchUserId);
+    const isLoading = useUserStore((state) => state.isLoading);
+    const userId = useUserStore((state) => state.userId);
+
+    useEffect(() => {
+        const storeState = useUserStore.getState();
+        if (!storeState.userId && !storeState.isLoading && !storeState.error) {
+            console.log('Attempting to fetch user ID.');
+            fetchUserId();
         } else {
-            console.log('Could not retrieve user ID (from .then).');
+            console.log('User ID fetch skipped (already loaded, loading, or error).', {
+                userId: storeState.userId,
+                isLoading: storeState.isLoading,
+                error: storeState.error
+            });
         }
-    }).catch(error => {
-        console.error('Error in getSupabaseUserId promise chain:', error);
-    });
+    }, [fetchUserId]);
 
     const queryClient = useQueryClient();
 
