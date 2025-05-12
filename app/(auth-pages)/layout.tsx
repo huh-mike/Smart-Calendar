@@ -2,6 +2,7 @@ import Link from "next/link";
 import {Button} from "@/components/ui/button";
 import HeaderAuth from "@/components/utils/header-auth";
 import {ThemeSwitcher} from "@/components/utils/theme-switcher";
+import {encodedRedirect} from "@/utils/utils";
 
 export default async function Layout({
   children,
@@ -16,7 +17,9 @@ export default async function Layout({
               <div className="flex gap-5 items-center font-semibold">
                 <Link href={"/"}>Smart Calendar</Link>
                 <div className="flex items-center gap-2">
-                  <Button variant='outline'>Start</Button>
+                  <Button  variant='outline' asChild>
+                    <Link href="/application">Start</Link>
+                  </Button>
                 </div>
               </div>
               <HeaderAuth />
