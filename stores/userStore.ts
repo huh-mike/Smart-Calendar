@@ -1,60 +1,49 @@
-import { create } from 'zustand'
-import { createClient } from '@/utils/supabase/client'
-
-async function getSupabaseUserId(): Promise<string | null> {
-    const supabase = createClient()
-    try {
-        const {data, error: authError} = await supabase.auth.getUser()
-
-        if (authError) {
-            console.error('Supabase error in fetching user: ', authError.message)
-            return null
-        }
-
-        if (data?.user) {
-            console.log('Supabase User ID from getSupabaseUserID: ', data.user.id)
-            return data.user.id
-        }else {
-            console.log('No user found in getSupabaseUserID')
-            return null
-        }
-    }catch(e: any) {
-        console.error('Unexpected error with getSupabaseUserID: ',e.message)
-        throw e
-    }
-}
+import { create } from 'zustand';
 
 interface UserState {
-    userId: string | null
-    isLoading: boolean
-    error: string | null
-    fetchUserId: () => Promise<void>
-    clearUser: () => void
+    userId: string | null;
+    isLoading: boolean;
+    error: string | null;
+
+    setUserId: (userId: string | null) => void; // Added setter
+    setLoading: (isLoading: boolean) => void; // Added setter
+    setError: (error: string | null) => void; // Added setter
+    clearUser: () => void;
 }
 
-export const useUserStore = create<UserState>((set,get)=> ({
+export const useUserStore = create<UserState>((set) => ({
     userId: null,
-    isLoading: false,
+    isLoading: false, // Default to false; useAuth will manage this
     error: null,
 
-    fetchUserId: async () => {
-        if (get().isLoading && get().userId) return
-        set({isLoading: true, error: null})
-        try {
-            const id = await getSupabaseUserId()
-            set({isLoading: false, userId: id})
-            if (!id){
-                console.log('No user found in Zustand Store')
-            }
-        } catch(e: any) {
-            console.error('Unexpected error with Zustand Store: ',e.message)
-            set({isLoading: false, error: e.message || 'Failed to fetch user ID (Zustand Store)', userId: null})
+    // Setter for userId
+    setUserId: (userId: string | null) => {
+        set({ userId });
+        // Optionally, you can also manage loading/error states here if needed when userId is set directly
+        // For example, if userId is set, imply loading is false and error is null
+        // set({ userId, isLoading: false, error: null });
+    },
+
+    // Setter for isLoading state
+    setLoading: (isLoading: boolean) => {
+        set({ isLoading });
+    },
+
+    // Setter for error state
+    setError: (error: string | null) => {
+        set({ error, isLoading: false }); // If error occurs, loading should typically be false
+        if (error) {
+            set({ userId: null }); // Clear userId if there's an error
         }
     },
 
-    clearUser: async () => {
-        set({userId: null, isLoading: false, error: null})
-        console.log('Clearing user in Zustand Store')
+    // clearUser remains the same, it's used by useAuth on SIGNED_OUT
+    clearUser: () => {
+        set({ userId: null, isLoading: false, error: null });
+        console.log('User cleared in Zustand Store');
     },
-}))
+
+    // fetchUserId is removed as its logic is now handled by the useAuth hook using TanStack Query.
+    // The useAuth hook will call setUserId, setLoading, and setError to keep this store in sync.
+}));
 

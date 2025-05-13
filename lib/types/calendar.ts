@@ -2,8 +2,8 @@ export interface Event {
     id: string;
     user_id: string;
     title: string;
-    description: string;
-    location: string;
+    description: string | null;
+    location: string | null;
     start_time: string;
     end_time: string;
     is_all_day: boolean;
